@@ -1,0 +1,61 @@
+name: Generer trending.json
+
+on:
+  workflow_dispatch:          # bouton "Run workflow" pour lancer a la main
+  schedule:
+    - cron: '30 5 * * 1'      # tous les lundis a 05:30 UTC (06:30 a Setif)
+
+permissions:
+  contents: write             # autorise le workflow a committer dans le repo
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      # 1) Recuperer le repo (pour pouvoir ecrire + committer trending.json)
+      - name: Recuperer le repo
+        uses: actions/checkout@v5
+
+      # 2) Appeler TMDb et fabriquer trending.json
+      - name: Construire trending.json
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}   # la cle vient du secret
+        run: |
+          set -euo pipefail
+
+          # Tendances de la semaine (films + series + personnes)
+          RESPONSE=$(curl --fail -sS \
+            "https://api.themoviedb.org/3/trending/all/week?api_key=${TMDB_API_KEY}")
+
+          # Compter les films/series (on ignore les "person")
+          COUNT=$(echo "$RESPONSE" | jq '[.results[] | select(.media_type=="movie" or .media_type=="tv")] | length')
+          echo "IDs film/serie trouves : $COUNT"
+
+          # Garde-fou : si 0, reponse anormale -> on garde l'ancien fichier
+          if [ "$COUNT" -eq 0 ]; then
+            echo "Aucun ID tendance -> on n'ecrase pas trending.json."
+            exit 1
+          fi
+
+          # Ecrire trending.json (id bruts uniquement ; l'app fait l'intersection)
+          echo "$RESPONSE" | jq '{
+            generated_at: (now | todate),
+            tmdb_ids: [.results[] | select(.media_type=="movie" or .media_type=="tv") | .id]
+          }' > trending.json
+
+          echo "----- trending.json genere -----"
+          cat trending.json
+
+      # 3) Committer seulement s'il y a un changement
+      - name: Committer si changement
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add trending.json
+          if git diff --staged --quiet; then
+            echo "Pas de changement dans trending.json."
+          else
+            git commit -m "chore: maj automatique de trending.json"
+            git push
+          fi
