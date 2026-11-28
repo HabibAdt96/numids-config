@@ -11,9 +11,9 @@
   "groupe_sujet_suggestions": 10,
   "groupe_sujet_commentaires": 93,
   "update_enabled": true,
-  "latest_version_code": 7,
-  "latest_version_name": "1.0.4",
-  "apk_url": "https://github.com/HabibAdt96/numids-releases/releases/download/v1.0.4/numids.apk",
-  "sha256": "366f7473e067e61535efcfbf62ea0e6403161a004894078ebc91829eb834889a",
-  "update_message": "bug ipv6 coriger"
+  "latest_version_code": 8,
+  "latest_version_name": "1.0.5",
+  "apk_url": "https://github.com/HabibAdt96/numids-releases/releases/download/v1.0.5/numids.apk",
+  "sha256": "ce9230750354cc38d96ac6a9b9f563efe0a0a3948c4c06cb239a80619d32dc6d",
+  "update_message": "Ameliorations et corrections"
 }
